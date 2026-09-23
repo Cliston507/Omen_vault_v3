@@ -11,6 +11,7 @@
     pkgs.gtk3
     pkgs.glib
     pkgs.gcc
+    pkgs.sqlite
   ];
 
   env = {

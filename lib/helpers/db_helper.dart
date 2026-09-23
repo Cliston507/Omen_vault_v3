@@ -1,58 +1,39 @@
+
 import 'dart:async';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:sqflite_sqlcipher/sqflite.dart';
 import 'package:path/path.dart';
+import 'package:sqflite_sqlcipher/sqflite.dart';
 
 class DBHelper {
-  static final DBHelper _instance = DBHelper._internal();
-  factory DBHelper() => _instance;
-  DBHelper._internal();
-
   static Database? _database;
-  static const _dbName = 'vault.db';
-  static const _dbVersion = 1;
-  static const _masterKey = 'master_key';
+  final Database? _testDb;
+
+  DBHelper() : _testDb = null;
+
+  DBHelper.test(this._testDb);
 
   Future<Database> get database async {
+    if (_testDb != null) return _testDb!;
     if (_database != null) return _database!;
     _database = await _initDB();
     return _database!;
   }
 
   Future<Database> _initDB() async {
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, _dbName);
-
-    const secureStorage = FlutterSecureStorage();
-    String? masterKey = await secureStorage.read(key: _masterKey);
-    if (masterKey == null) {
-      masterKey = await _generateMasterKey();
-      await secureStorage.write(key: _masterKey, value: masterKey);
-    }
-
+    String path = join(await getDatabasesPath(), 'app.db');
     return await openDatabase(
       path,
-      version: _dbVersion,
-      password: masterKey,
-      onCreate: _onCreate,
+      version: 1,
+      onCreate: (db, version) async {
+        await db.execute('''
+          CREATE TABLE mutation_queue(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            model TEXT NOT NULL,
+            data TEXT NOT NULL,
+            action TEXT NOT NULL,
+            timestamp TEXT NOT NULL
+          )
+        ''');
+      },
     );
-  }
-
-  Future<String> _generateMasterKey() async {
-    // In a real app, you should use a more secure way to generate the master key.
-    // For this example, we'll use a simple string.
-    return 'a_very_secure_master_key';
-  }
-
-  Future<void> _onCreate(Database db, int version) async {
-    await db.execute('''
-      CREATE TABLE mutation_queue (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        model TEXT NOT NULL,
-        data TEXT NOT NULL,
-        action TEXT NOT NULL,
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-      )
-    ''');
   }
 }

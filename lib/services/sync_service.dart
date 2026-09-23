@@ -6,10 +6,16 @@ import 'mutation_queue_service.dart';
 
 class SyncService {
   final Connectivity _connectivity = Connectivity();
-  final MutationQueueService _mutationQueueService = MutationQueueService();
+  late final MutationQueueService _mutationQueueService;
   late StreamSubscription<List<ConnectivityResult>> _connectivitySubscription;
 
   bool _isProcessing = false;
+
+  SyncService() {
+    _mutationQueueService = MutationQueueService();
+  }
+
+  SyncService.test(this._mutationQueueService);
 
   void initialize() {
     _connectivitySubscription = _connectivity.onConnectivityChanged.listen(_handleConnectivityChange);
@@ -53,11 +59,11 @@ class SyncService {
 
     final connectivityResult = await _connectivity.checkConnectivity();
     if (connectivityResult.contains(ConnectivityResult.mobile) || connectivityResult.contains(ConnectivityResult.wifi)) {
-      _processQueue();
+      processQueue();
     }
   }
 
-  Future<void> _processQueue() async {
+  Future<void> processQueue() async {
     _isProcessing = true;
 
     try {

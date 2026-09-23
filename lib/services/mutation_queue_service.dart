@@ -44,7 +44,15 @@ class Mutation {
 }
 
 class MutationQueueService {
-  final DBHelper _dbHelper = DBHelper();
+  late DBHelper _dbHelper;
+
+  MutationQueueService() {
+    _dbHelper = DBHelper();
+  }
+
+  MutationQueueService.test(DBHelper dbHelper) {
+    _dbHelper = dbHelper;
+  }
 
   // Enqueues a new mutation operation into the offline queue.
   Future<void> enqueue(Mutation mutation) async {
