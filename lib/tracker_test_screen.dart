@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:omen_vault_v3/core/services/analytics_service.dart';
 import 'main.dart';
 import 'package:omen_vault_v3/profile_screen.dart';
 import 'package:provider/provider.dart';
-
 
 class TrackerTestScreen extends StatefulWidget {
   const TrackerTestScreen({super.key});
@@ -14,7 +13,8 @@ class TrackerTestScreen extends StatefulWidget {
 
 class _TrackerTestScreenState extends State<TrackerTestScreen> {
   Future<void> _logVideoRecordingTestEvent() async {
-    await FirebaseAnalytics.instance.logEvent(
+    final analyticsService = Provider.of<IAnalyticsService>(context, listen: false);
+    await analyticsService.logAction(
       name: 'video_recording_test',
       parameters: {
         'user_id': 'test_user_123',

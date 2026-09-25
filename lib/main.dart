@@ -3,14 +3,18 @@ import 'package:google_fonts/google_fonts.dart'; // Import GoogleFonts
 import 'package:provider/provider.dart'; // Import Provider
 import 'package:firebase_core/firebase_core.dart';
 import 'package:omen_vault_v3/tracker_test_screen.dart';
+import 'package:omen_vault_v3/service_provider.dart';
+import 'package:omen_vault_v3/core/services/analytics_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   runApp(
-    ChangeNotifierProvider(
-      create: (context) => ThemeProvider(),
-      child: const MyApp(),
+    ServiceProvider(
+      child: ChangeNotifierProvider(
+        create: (context) => ThemeProvider(),
+        child: const MyApp(),
+      ),
     ),
   );
 }
@@ -37,6 +41,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final analyticsService = Provider.of<IAnalyticsService>(context, listen: false) as FirebaseAnalyticsService;
     const MaterialColor primarySeedColor = Colors.deepPurple;
 
     // Define a common TextTheme
@@ -101,6 +106,9 @@ class MyApp extends StatelessWidget {
           theme: lightTheme,
           darkTheme: darkTheme,
           themeMode: themeProvider.themeMode,
+          navigatorObservers: [
+            analyticsService.observer,
+          ],
           home: const TrackerTestScreen(),
         );
       },
