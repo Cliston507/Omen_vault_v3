@@ -3,6 +3,7 @@ import 'package:omen_vault_v3/core/services/analytics_service.dart';
 import 'main.dart';
 import 'package:omen_vault_v3/profile_screen.dart';
 import 'package:provider/provider.dart';
+import 'dart:developer' as developer;
 
 class TrackerTestScreen extends StatefulWidget {
   const TrackerTestScreen({super.key});
@@ -13,6 +14,7 @@ class TrackerTestScreen extends StatefulWidget {
 
 class _TrackerTestScreenState extends State<TrackerTestScreen> {
   Future<void> _logVideoRecordingTestEvent() async {
+    developer.log('Logging video_recording_test event...', name: 'my_app.tracker');
     final analyticsService = Provider.of<IAnalyticsService>(context, listen: false);
     await analyticsService.logAction(
       name: 'video_recording_test',
@@ -27,10 +29,12 @@ class _TrackerTestScreenState extends State<TrackerTestScreen> {
         content: Text('"video_recording_test" event logged successfully!'),
       ),
     );
+    developer.log('Finished logging video_recording_test event.', name: 'my_app.tracker');
   }
 
   @override
   Widget build(BuildContext context) {
+    developer.log('Building TrackerTestScreen...', name: 'my_app.tracker');
     return Scaffold(
       appBar: AppBar(
         title: const Text('Omen Vault'),

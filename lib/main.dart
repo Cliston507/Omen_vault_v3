@@ -5,10 +5,15 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:omen_vault_v3/tracker_test_screen.dart';
 import 'package:omen_vault_v3/service_provider.dart';
 import 'package:omen_vault_v3/core/services/analytics_service.dart';
+import 'firebase_options.dart';
+import 'dart:developer' as developer;
 
 void main() async {
+  developer.log('Starting main...', name: 'my_app.main');
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(
     ServiceProvider(
       child: ChangeNotifierProvider(
@@ -17,6 +22,7 @@ void main() async {
       ),
     ),
   );
+  developer.log('Finished main.', name: 'my_app.main');
 }
 
 // ThemeProvider class to manage the theme state
@@ -41,6 +47,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    developer.log('Building MyApp...', name: 'my_app.main');
     final analyticsService = Provider.of<IAnalyticsService>(context, listen: false) as FirebaseAnalyticsService;
     const MaterialColor primarySeedColor = Colors.deepPurple;
 

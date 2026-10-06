@@ -1,0 +1,69 @@
+{
+  "project_info": {
+    "project_number": "6588628291",
+    "firebase_url": "https://omen-1eb1c-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "omen-1eb1c",
+    "storage_bucket": "omen-1eb1c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:6588628291:android:cbe865098c0ea79d2d43f6",
+        "android_client_info": {
+          "package_name": "com.example.myapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "6588628291-m8cnuopt7681jlkrgn4s61gh1kf6egsf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDFIOITxtAbcD0T3SR12y2z0QZP8l_Xn0Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "6588628291-m8cnuopt7681jlkrgn4s61gh1kf6egsf.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:6588628291:android:dbfee78bb8d77bc82d43f6",
+        "android_client_info": {
+          "package_name": "com.omen.vault"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "6588628291-m8cnuopt7681jlkrgn4s61gh1kf6egsf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDFIOITxtAbcD0T3SR12y2z0QZP8l_Xn0Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "6588628291-m8cnuopt7681jlkrgn4s61gh1kf6egsf.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
