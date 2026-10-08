@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:google_fonts/google_fonts.dart'; // Import GoogleFonts
 import 'package:provider/provider.dart'; // Import Provider
 import 'package:firebase_core/firebase_core.dart';
-import 'package:omen_vault_v3/tracker_test_screen.dart';
 import 'package:omen_vault_v3/service_provider.dart';
+import 'package:omen_vault_v3/auth_wrapper.dart';
+import 'package:omen_vault_v3/services/sync_service.dart';
 import 'package:omen_vault_v3/core/services/analytics_service.dart';
 import 'firebase_options.dart';
 import 'dart:developer' as developer;
@@ -22,6 +24,16 @@ void main() async {
       ),
     ),
   );
+  // Offline sync runs on native platforms only: the SQLCipher queue is not
+  // available on the web target.
+  if (!kIsWeb) {
+    try {
+      SyncService.instance.initialize();
+    } catch (e) {
+      developer.log('SyncService failed to initialize: $e',
+          name: 'my_app.main');
+    }
+  }
   developer.log('Finished main.', name: 'my_app.main');
 }
 
@@ -109,14 +121,14 @@ class MyApp extends StatelessWidget {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         return MaterialApp(
-          title: 'Flutter Material AI App',
+          title: 'Omen Vault',
           theme: lightTheme,
           darkTheme: darkTheme,
           themeMode: themeProvider.themeMode,
           navigatorObservers: [
             analyticsService.observer,
           ],
-          home: const TrackerTestScreen(),
+          home: const AuthWrapper(),
         );
       },
     );

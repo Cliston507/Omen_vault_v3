@@ -1,8 +1,26 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if request.auth != null;
+    // User profiles: readable and writable only by their owner.
+    // The generic rule below explicitly excludes the users collection so
+    // that one user cannot create or hijack another user's profile doc.
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+    // All other collections: documents must carry an ownerId field and only
+    // the owner may access them. On update the ownerId must not change, so
+    // an owner cannot hand a document to a different account.
+    match /{collection}/{docId} {
+      allow create: if request.auth != null
+        && collection != 'users'
+        && request.resource.data.ownerId == request.auth.uid;
+      allow read, delete: if request.auth != null
+        && collection != 'users'
+        && resource.data.ownerId == request.auth.uid;
+      allow update: if request.auth != null
+        && collection != 'users'
+        && resource.data.ownerId == request.auth.uid
+        && request.resource.data.ownerId == request.auth.uid;
     }
   }
 }
