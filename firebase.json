@@ -1,1 +1,39 @@
-{"firestore":{"database":"(default)","location":"us-central","rules":"firestore.rules","indexes":"firestore.indexes.json"},"auth":{"providers":{"anonymous":true,"emailPassword":true}},"flutter":{"platforms":{"android":{"default":{"projectId":"omen-1eb1c","appId":"1:6588628291:android:cbe865098c0ea79d2d43f6","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"omen-1eb1c","configurations":{"web":"1:6588628291:web:b3d4cfa259b98c812d43f6"}}}}}}
+{
+  "firestore": {
+    "database": "(default)",
+    "location": "us-central",
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "auth": {
+    "providers": {
+      "anonymous": true,
+      "emailPassword": true
+    }
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "omen-1eb1c",
+          "appId": "1:6588628291:android:cbe865098c0ea79d2d43f6",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "omen-1eb1c",
+          "configurations": {
+            "web": "1:6588628291:web:b3d4cfa259b98c812d43f6"
+          }
+        }
+      }
+    }
+  },
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "database": {
+    "rules": "database.rules.json"
+  }
+}

@@ -1,8 +1,19 @@
 
 import 'dart:convert';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:sqflite_sqlcipher/sqflite.dart';
 import '../helpers/db_helper.dart';
+
+/// Returns the current user id when available, null otherwise.
+/// Never throws, so it is safe to call from enqueue paths in tests.
+String? currentUserIdOrNull() {
+  try {
+    return FirebaseAuth.instance.currentUser?.uid;
+  } on Object {
+    return null;
+  }
+}
 
 // Represents a single mutation operation to be queued.
 class Mutation {
@@ -11,6 +22,10 @@ class Mutation {
   final Map<String, dynamic> data;
   final String action;
   final DateTime timestamp;
+  /// The user whose data this mutation touches. Bound when the mutation is
+  /// enqueued so queued work can never be uploaded under a different
+  /// account after a sign-out / account switch.
+  final String? ownerId;
 
   Mutation({
     this.id,
@@ -18,6 +33,7 @@ class Mutation {
     required this.data,
     required this.action,
     required this.timestamp,
+    this.ownerId,
   });
 
   // Factory constructor to create a Mutation from a map (database row).
@@ -28,6 +44,7 @@ class Mutation {
       data: jsonDecode(map['data']) as Map<String, dynamic>,
       action: map['action'],
       timestamp: DateTime.parse(map['timestamp']),
+      ownerId: map['ownerId'],
     );
   }
 
@@ -39,6 +56,7 @@ class Mutation {
       'data': jsonEncode(data),
       'action': action,
       'timestamp': timestamp.toIso8601String(),
+      'ownerId': ownerId,
     };
   }
 }
@@ -58,13 +76,21 @@ class MutationQueueService {
   Future<void> enqueue(Mutation mutation) async {
     try {
       final db = await _dbHelper.database;
+      // Bind the mutation to the current user at enqueue time.
+      final bound = Mutation(
+        id: mutation.id,
+        model: mutation.model,
+        data: mutation.data,
+        action: mutation.action,
+        timestamp: mutation.timestamp,
+        ownerId: mutation.ownerId ?? currentUserIdOrNull(),
+      );
       await db.insert(
         'mutation_queue',
-        mutation.toMap(),
+        bound.toMap(),
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
     } catch (e) {
-      // In a real app, you would want to log this error.
       debugPrint('Error enqueuing mutation: $e');
     }
   }
