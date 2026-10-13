@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:omen_vault_v3/auth_wrapper.dart';
-import 'package:omen_vault_v3/tracker_test_screen.dart';
 import 'package:omen_vault_v3/views/vault_home_view.dart';
 import 'package:omen_vault_v3/core/services/analytics_service.dart';
 import 'package:omen_vault_v3/helpers/db_helper.dart';
@@ -48,18 +47,8 @@ void main() {
     expect(find.text('Password'), findsWidgets);
     expect(find.text('Sign In'), findsOneWidget);
     expect(find.text('Register'), findsOneWidget);
-    expect(find.text('Sign In Anonymously'), findsOneWidget);
-  });
-
-  testWidgets('home screen renders with app bar and tracker card',
-      (WidgetTester tester) async {
-    await tester.pumpWidget(_wrap(const TrackerTestScreen()));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Omen Vault'), findsOneWidget);
-    expect(find.text('Firebase Analytics Tracker'), findsOneWidget);
-    expect(find.byIcon(Icons.person), findsOneWidget);
-    expect(find.byIcon(Icons.dark_mode), findsOneWidget);
+    // Anonymous sign-in was removed: a vault needs a real account.
+    expect(find.text('Sign In Anonymously'), findsNothing);
   });
 
   group('vault flow', () {

@@ -63,26 +63,6 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  Future<void> _signInAnonymously() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-    try {
-      await Provider.of<AuthService>(context, listen: false).signInAnonymously();
-    } catch (e) {
-      setState(() {
-        _errorMessage = e.toString();
-      });
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -135,11 +115,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       OutlinedButton(
                         onPressed: _register,
                         child: const Text('Register'),
-                      ),
-                      const SizedBox(height: 16),
-                      TextButton(
-                        onPressed: _signInAnonymously,
-                        child: const Text('Sign In Anonymously'),
                       ),
                     ],
                   ),

@@ -74,6 +74,6 @@ class DefaultFirebaseOptions {
     databaseURL: 'https://omen-1eb1c-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'omen-1eb1c.firebasestorage.app',
     iosClientId: '6588628291-55i6h1chk7gvb7i2k1o1askkd2asa6s6.apps.googleusercontent.com',
-    iosBundleId: 'com.example.omenVaultV3',
+    iosBundleId: 'com.belmontbennett.vault',
   );
 }

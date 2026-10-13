@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [develop-v3]
+  pull_request:
+    branches: [develop-v3]
+
+permissions:
+  contents: read
+
+jobs:
+  analyze-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      # The unit tests use an in-memory SQLite database through
+      # sqflite_common_ffi, which needs the system SQLite library.
+      - name: Install SQLite
+        run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test

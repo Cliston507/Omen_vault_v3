@@ -8,7 +8,7 @@
 PRODUCT_NAME = omen_vault_v3
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.example.omenVaultV3
+PRODUCT_BUNDLE_IDENTIFIER = com.belmontbennett.vault
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2026 com.example. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2026 Belmont Bennett. All rights reserved.
