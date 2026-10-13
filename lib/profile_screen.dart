@@ -19,7 +19,7 @@ class ProfileScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Email: ${user?.email ?? 'Anonymous'}',
+              'Email: ${user?.email ?? 'Unknown'}',
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 32),

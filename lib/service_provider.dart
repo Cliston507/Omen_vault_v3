@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:omen_vault_v3/core/services/analytics_service.dart';
+import 'package:omen_vault_v3/core/services/plan_service.dart';
 import 'package:omen_vault_v3/services/auth_service.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -20,6 +21,9 @@ class ServiceProvider extends StatelessWidget {
       providers: [
         Provider<IAnalyticsService>(
           create: (_) => FirebaseAnalyticsService(),
+        ),
+        Provider<IPlanService>(
+          create: (_) => FreePlanService(),
         ),
         Provider<AuthService>(
           create: (_) => AuthService(),

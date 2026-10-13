@@ -14,10 +14,6 @@ class AuthService {
     return await _auth.createUserWithEmailAndPassword(email: email, password: password);
   }
 
-  Future<UserCredential> signInAnonymously() async {
-    return await _auth.signInAnonymously();
-  }
-
   Future<void> signOut() async {
     await _auth.signOut();
   }

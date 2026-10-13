@@ -1,5 +1,5 @@
 name: omen_vault_v3
-description: "A new Flutter project."
+description: "Omen Vault: a private, encrypted vault."
 publish_to: 'none'
 version: 1.0.0+1
 environment:
