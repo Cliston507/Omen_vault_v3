@@ -1,5 +1,5 @@
 { pkgs, ... }: {
-  channel = "stable-23.11";
+  channel = "unstable";
 
   packages = [
     pkgs.flutter
@@ -12,6 +12,7 @@
     pkgs.glib
     pkgs.gcc
     pkgs.sqlite
+    pkgs.sqlite.dev
     pkgs.sqlcipher
     pkgs.openssl
     pkgs.libsecret

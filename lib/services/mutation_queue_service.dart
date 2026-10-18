@@ -1,102 +1,62 @@
-
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
-import 'package:sqflite_sqlcipher/sqflite.dart';
-import '../helpers/db_helper.dart';
+import 'package:sqflite/sqflite.dart';
 
-// Represents a single mutation operation to be queued.
-class Mutation {
-  final int? id;
-  final String model;
-  final Map<String, dynamic> data;
-  final String action;
-  final DateTime timestamp;
-
-  Mutation({
-    this.id,
-    required this.model,
-    required this.data,
-    required this.action,
-    required this.timestamp,
-  });
-
-  // Factory constructor to create a Mutation from a map (database row).
-  factory Mutation.fromMap(Map<String, dynamic> map) {
-    return Mutation(
-      id: map['id'],
-      model: map['model'],
-      data: jsonDecode(map['data']) as Map<String, dynamic>,
-      action: map['action'],
-      timestamp: DateTime.parse(map['timestamp']),
-    );
-  }
-
-  // Method to convert a Mutation object to a map for database insertion.
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'model': model,
-      'data': jsonEncode(data),
-      'action': action,
-      'timestamp': timestamp.toIso8601String(),
-    };
-  }
-}
+import 'package:omen_vault_v3/models/vault_entry.dart';
 
 class MutationQueueService {
-  late DBHelper _dbHelper;
+  final Database _database;
 
-  MutationQueueService() {
-    _dbHelper = DBHelper();
+  MutationQueueService(this._database);
+
+  Future<void> _ensureQueueTableExists() async {
+    await _database.execute('''
+      CREATE TABLE IF NOT EXISTS mutation_queue(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        type TEXT NOT NULL,
+        data TEXT NOT NULL,
+        timestamp INTEGER NOT NULL
+      )
+      ''');
   }
 
-  MutationQueueService.test(DBHelper dbHelper) {
-    _dbHelper = dbHelper;
+  Future<void> enqueueAdd(VaultEntry entry) async {
+    await _ensureQueueTableExists();
+    final data = jsonEncode(entry.toJson());
+    await _database.insert('mutation_queue', {
+      'type': 'add',
+      'data': data,
+      'timestamp': DateTime.now().millisecondsSinceEpoch,
+    });
   }
 
-  // Enqueues a new mutation operation into the offline queue.
-  Future<void> enqueue(Mutation mutation) async {
-    try {
-      final db = await _dbHelper.database;
-      await db.insert(
-        'mutation_queue',
-        mutation.toMap(),
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
-    } catch (e) {
-      // In a real app, you would want to log this error.
-      debugPrint('Error enqueuing mutation: $e');
-    }
+  Future<void> enqueueUpdate(VaultEntry entry) async {
+    await _ensureQueueTableExists();
+    final data = jsonEncode(entry.toJson());
+    await _database.insert('mutation_queue', {
+      'type': 'update',
+      'data': data,
+      'timestamp': DateTime.now().millisecondsSinceEpoch,
+    });
   }
 
-  // Fetches all un-synced mutation operations from the queue, ordered by timestamp.
-  Future<List<Mutation>> getUnsyncedMutations() async {
-    try {
-      final db = await _dbHelper.database;
-      final List<Map<String, dynamic>> maps = await db.query(
-        'mutation_queue',
-        orderBy: 'timestamp ASC',
-      );
-      return List.generate(maps.length, (i) {
-        return Mutation.fromMap(maps[i]);
-      });
-    } catch (e) {
-      debugPrint('Error fetching unsynced mutations: $e');
-      return [];
-    }
+  Future<void> enqueueDelete(int entryId) async {
+    await _ensureQueueTableExists();
+    await _database.insert('mutation_queue', {
+      'type': 'delete',
+      'data': jsonEncode({'id': entryId}),
+      'timestamp': DateTime.now().millisecondsSinceEpoch,
+    });
   }
 
-  // Deletes a synced transaction from the queue by its ID.
-  Future<void> deleteMutation(int id) async {
-    try {
-      final db = await _dbHelper.database;
-      await db.delete(
-        'mutation_queue',
-        where: 'id = ?',
-        whereArgs: [id],
-      );
-    } catch (e) {
-      debugPrint('Error deleting mutation: $e');
-    }
+  Future<List<Map<String, dynamic>>> getPendingMutations() async {
+    await _ensureQueueTableExists();
+    return await _database.query('mutation_queue', orderBy: 'timestamp ASC');
+  }
+
+  Future<void> clearProcessedMutations(List<int> processedIds) async {
+    if (processedIds.isEmpty) return;
+    await _ensureQueueTableExists();
+    final ids = processedIds.join(',');
+    await _database.delete('mutation_queue', where: 'id IN ($ids)');
   }
 }

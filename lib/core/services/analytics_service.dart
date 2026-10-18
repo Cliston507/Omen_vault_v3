@@ -1,6 +1,7 @@
 import 'package:firebase_analytics/firebase_analytics.dart';
 
 abstract class IAnalyticsService {
+  FirebaseAnalyticsObserver? get observer;
   Future<void> logScreen({required String screenName});
   Future<void> logAction({required String name, Map<String, Object>? parameters});
   Future<void> setUserId(String? userId);
@@ -12,7 +13,8 @@ class FirebaseAnalyticsService implements IAnalyticsService {
   FirebaseAnalyticsService({FirebaseAnalytics? analytics})
       : _analytics = analytics ?? FirebaseAnalytics.instance;
 
-  FirebaseAnalyticsObserver get observer =>
+  @override
+  FirebaseAnalyticsObserver? get observer =>
       FirebaseAnalyticsObserver(analytics: _analytics);
 
   @override

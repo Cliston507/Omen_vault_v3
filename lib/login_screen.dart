@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:omen_vault_v3/services/auth_service.dart';
-import 'package:provider/provider.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -24,7 +24,8 @@ class _LoginScreenState extends State<LoginScreen> {
         _errorMessage = null;
       });
       try {
-        await Provider.of<AuthService>(context, listen: false)
+        await ref
+            .read(authServiceProvider)
             .signInWithEmail(_emailController.text, _passwordController.text);
       } catch (e) {
         setState(() {
@@ -47,7 +48,8 @@ class _LoginScreenState extends State<LoginScreen> {
         _errorMessage = null;
       });
       try {
-        await Provider.of<AuthService>(context, listen: false)
+        await ref
+            .read(authServiceProvider)
             .registerWithEmail(_emailController.text, _passwordController.text);
       } catch (e) {
         setState(() {
@@ -69,7 +71,7 @@ class _LoginScreenState extends State<LoginScreen> {
       _errorMessage = null;
     });
     try {
-      await Provider.of<AuthService>(context, listen: false).signInAnonymously();
+      await ref.read(authServiceProvider).signInAnonymously();
     } catch (e) {
       setState(() {
         _errorMessage = e.toString();
