@@ -1,0 +1,12 @@
+{
+  "project": "Leviathan Confrontation",
+  "total_duration_sec": 35,
+  "beats": [
+    {"timestamp": "0:00-0:03", "duration_sec": 3, "freq_hz": 28, "sfx": "Sub-bass impact, metallic guttural roar, wet plasma burst", "dialogue": "[DEAFENING ROAR]"},
+    {"timestamp": "0:04-0:08", "duration_sec": 4, "freq_hz": 45, "sfx": "Seismic shockwave, crushing stone masonry, sub-drone", "dialogue": "Insolent worm!"},
+    {"timestamp": "0:09-0:15", "duration_sec": 6, "freq_hz": 55, "sfx": "Layered demonic growl, steam venting hiss", "dialogue": "My shell will break you!"},
+    {"timestamp": "0:16-0:22", "duration_sec": 6, "freq_hz": 0, "sfx": "Total audio vacuum drop, gentle desolate wind whistle", "dialogue": ""},
+    {"timestamp": "0:23-0:29", "duration_sec": 6, "freq_hz": 528, "sfx": "Crystal glass chime, rising ethereal choir swell", "dialogue": "You are already shattered."},
+    {"timestamp": "0:30-0:35", "duration_sec": 5, "freq_hz": 30, "sfx": "Piercing resonant boom, sharp celestial ping, abrupt dry cut to black", "dialogue": "[TO BE CONTINUED]"}
+  ]
+}

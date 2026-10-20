@@ -46,7 +46,7 @@ class _LockScreenState extends ConsumerState<LockScreen> with WidgetsBindingObse
 
     try {
       final authService = ref.read(authServiceProvider);
-      final bool isAuthenticated = await authService.authenticate();
+      final bool isAuthenticated = await authService.authenticateWithBiometrics();
 
       if (!mounted) return;
 
@@ -152,7 +152,3 @@ class _LockScreenState extends ConsumerState<LockScreen> with WidgetsBindingObse
     );
   }
 }
-
-final authServiceProvider = Provider<AuthService>((ref) {
-  return AuthService();
-});

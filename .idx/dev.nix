@@ -21,7 +21,7 @@
   env = {
     CMAKE_MAKE_PROGRAM = "${pkgs.ninja}/bin/ninja";
     CMAKE_CXX_COMPILER = "${pkgs.clang}/bin/clang++";
-    PKG_CONFIG_PATH = "${pkgs.sqlcipher}/lib/pkgconfig:${pkgs.gtk3}/lib/pkgconfig:${pkgs.glib}/lib/pkgconfig:${pkgs.openssl.dev}/lib/pkgconfig:${pkgs.libsecret}/lib/pkgconfig";
+    PKG_CONFIG_PATH = "${pkgs.sqlcipher}/lib/pkgconfig:${pkgs.gtk3}/lib/pkgconfig:${pkgs.glib}/lib/pkgconfig:${pkgs.openssl.dev}/lib/pkgconfig:${pkgs.libsecret.dev}/lib/pkgconfig";
   };
 
    idx.previews = {
