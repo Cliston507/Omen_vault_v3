@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:omen_vault_v3/screens/key_recovery_screen.dart';
 import 'package:omen_vault_v3/screens/lock_screen.dart';
@@ -19,8 +22,19 @@ class OmenVaultApp extends StatefulWidget {
 
 class _OmenVaultAppState extends State<OmenVaultApp>
     with WidgetsBindingObserver {
+  static const _privacyChannel = MethodChannel('omen_vault/privacy');
   final _navigatorKey = GlobalKey<NavigatorState>();
   bool _wasPaused = false;
+
+  // Privacy guard handshake (iOS only): tell native that a safe frame is
+  // on screen so it may release the black overlay. No handler on Android
+  // (FLAG_SECURE needs none) — the try/catch swallows that case.
+  Future<void> _releasePrivacyOverlay() async {
+    if (!Platform.isIOS) return;
+    try {
+      await _privacyChannel.invokeMethod('releasePrivacyOverlay');
+    } catch (_) {}
+  }
 
   @override
   void initState() {
@@ -41,11 +55,19 @@ class _OmenVaultAppState extends State<OmenVaultApp>
     if (state == AppLifecycleState.paused) {
       _wasPaused = true;
     }
-    if (state == AppLifecycleState.resumed && _wasPaused) {
-      _wasPaused = false;
-      _navigatorKey.currentState?.pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const LockScreen()),
-        (_) => false,
+    if (state == AppLifecycleState.resumed) {
+      if (_wasPaused) {
+        _wasPaused = false;
+        _navigatorKey.currentState?.pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const LockScreen()),
+          (_) => false,
+        );
+      }
+      // Release the iOS overlay only after a frame is rendered — by then
+      // the screen on display is the LockScreen (backgrounded case) or the
+      // already-visible screen (shade-pull case). Never before the frame.
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _releasePrivacyOverlay(),
       );
     }
   }

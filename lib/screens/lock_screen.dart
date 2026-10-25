@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:omen_vault_v3/screens/vault_home_screen.dart';
 import 'package:omen_vault_v3/services/auth_service.dart';
@@ -11,14 +14,25 @@ class LockScreen extends ConsumerStatefulWidget {
 }
 
 class _LockScreenState extends ConsumerState<LockScreen> with WidgetsBindingObserver {
+  static const _privacyChannel = MethodChannel('omen_vault/privacy');
   bool _isAuthenticating = false;
   String? _errorMessage;
+
+  // Privacy guard handshake (iOS only): this screen's first rendered frame
+  // is the signal that native may release the black overlay.
+  Future<void> _releasePrivacyOverlay() async {
+    if (!Platform.isIOS) return;
+    try {
+      await _privacyChannel.invokeMethod('releasePrivacyOverlay');
+    } catch (_) {}
+  }
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _releasePrivacyOverlay();
       _initiateAuthentication();
     });
   }
