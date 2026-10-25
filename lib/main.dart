@@ -10,12 +10,50 @@ void main() {
   runApp(const ProviderScope(child: OmenVaultApp()));
 }
 
-class OmenVaultApp extends StatelessWidget {
+class OmenVaultApp extends StatefulWidget {
   const OmenVaultApp({super.key});
+
+  @override
+  State<OmenVaultApp> createState() => _OmenVaultAppState();
+}
+
+class _OmenVaultAppState extends State<OmenVaultApp>
+    with WidgetsBindingObserver {
+  final _navigatorKey = GlobalKey<NavigatorState>();
+  bool _wasPaused = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Privacy guard: only a real backgrounding locks the vault. Pulling the
+    // notification shade (inactive -> resumed, never paused) must NOT lock it.
+    if (state == AppLifecycleState.paused) {
+      _wasPaused = true;
+    }
+    if (state == AppLifecycleState.resumed && _wasPaused) {
+      _wasPaused = false;
+      _navigatorKey.currentState?.pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const LockScreen()),
+        (_) => false,
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: _navigatorKey,
       title: 'Omen Vault v3',
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark().copyWith(
