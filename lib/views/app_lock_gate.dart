@@ -34,6 +34,10 @@ class _AppLockGateState extends State<AppLockGate> with WidgetsBindingObserver {
 
   bool _unlocked = false;
   bool _authInProgress = false;
+
+  /// True while the app is not in the foreground. Covers the screen so the
+  /// app-switcher preview (taken by the phone at that moment) shows nothing.
+  bool _obscured = false;
   DateTime? _backgroundedAt;
   String? _error;
 
@@ -67,7 +71,10 @@ class _AppLockGateState extends State<AppLockGate> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (!_active || _authInProgress) return; // the unlock prompt itself pauses the app
+    if (!_active) return;
+    final obscure = state != AppLifecycleState.resumed;
+    if (obscure != _obscured) setState(() => _obscured = obscure);
+    if (_authInProgress) return; // the unlock prompt itself pauses the app
     if (state == AppLifecycleState.paused || state == AppLifecycleState.hidden) {
       _backgroundedAt ??= DateTime.now();
     } else if (state == AppLifecycleState.resumed) {
@@ -129,7 +136,19 @@ class _AppLockGateState extends State<AppLockGate> with WidgetsBindingObserver {
         // Keep the app alive but hidden and untouchable while locked.
         Offstage(offstage: locked, child: widget.child),
         if (locked) Positioned.fill(child: _lockScreen(context)),
+        if (_active && _obscured && !locked)
+          Positioned.fill(child: _privacyCover(context)),
       ],
+    );
+  }
+
+  Widget _privacyCover(BuildContext context) {
+    final theme = Theme.of(context);
+    return ColoredBox(
+      color: theme.colorScheme.surface,
+      child: Center(
+        child: Icon(Icons.lock, size: 72, color: theme.colorScheme.primary),
+      ),
     );
   }
 
