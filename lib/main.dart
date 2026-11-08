@@ -5,6 +5,8 @@ import 'package:provider/provider.dart'; // Import Provider
 import 'package:firebase_core/firebase_core.dart';
 import 'package:omen_vault_v3/service_provider.dart';
 import 'package:omen_vault_v3/auth_wrapper.dart';
+import 'package:omen_vault_v3/views/app_lock_gate.dart';
+import 'package:firebase_auth/firebase_auth.dart' show User;
 import 'package:omen_vault_v3/services/sync_service.dart';
 import 'package:omen_vault_v3/core/services/analytics_service.dart';
 import 'firebase_options.dart';
@@ -128,6 +130,12 @@ class MyApp extends StatelessWidget {
           navigatorObservers: [
             analyticsService.observer,
           ],
+          // App lock covers every screen (including pushed ones) while
+          // signed in.
+          builder: (context, child) => AppLockGate(
+            enabled: Provider.of<User?>(context) != null,
+            child: child ?? const SizedBox.shrink(),
+          ),
           home: const AuthWrapper(),
         );
       },
