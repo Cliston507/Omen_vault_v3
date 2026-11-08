@@ -125,6 +125,56 @@ class VaultRepository {
     SyncService.instance.scheduleSync();
   }
 
+  /// Saves entries downloaded during a restore. A local copy that is newer
+  /// than the cloud copy is kept.
+  Future<void> importEntries(List<VaultEntry> remote) async {
+    final db = await _db;
+    await db.transaction((txn) async {
+      for (final e in remote) {
+        if (e.ownerId != userId) continue;
+        final existing = await txn.query(
+          'vault_entries',
+          where: 'id = ? AND ownerId = ?',
+          whereArgs: [e.id, userId],
+          limit: 1,
+        );
+        if (existing.isNotEmpty &&
+            DateTime.parse(existing.first['updatedAt'] as String)
+                .isAfter(e.updatedAt)) {
+          continue;
+        }
+        await txn.insert('vault_entries', e.toMap(),
+            conflictAlgorithm: ConflictAlgorithm.replace);
+      }
+    });
+  }
+
+  /// Queues every local entry for upload. Run once after a recovery phrase
+  /// is set up or restored: it replaces any plain-text cloud copies with
+  /// encrypted ones. Returns how many entries were queued.
+  Future<int> queueAllForUpload() async {
+    final entries = await getEntries();
+    if (entries.isEmpty) return 0;
+    final now = DateTime.now();
+    final db = await _db;
+    await db.transaction((txn) async {
+      for (final e in entries) {
+        await txn.insert(
+          'mutation_queue',
+          Mutation(
+            model: 'vault_entries',
+            data: e.toRemoteData(),
+            action: 'update',
+            timestamp: now,
+            ownerId: userId,
+          ).toMap(),
+        );
+      }
+    });
+    SyncService.instance.scheduleSync();
+    return entries.length;
+  }
+
   /// Sortable unique id without extra dependencies: time-ordered with a
   /// random suffix.
   static String _generateId(DateTime now) =>

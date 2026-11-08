@@ -150,18 +150,39 @@ class OmenVaultKeyRecoveryService {
     required bool backupVerified,
     required bool overwriteExisting,
   }) async {
+    final masterKey = await deriveMasterKey(mnemonic: mnemonic, passphrase: passphrase);
+    await storeMasterKey(
+      masterKey,
+      backupVerified: backupVerified,
+      overwriteExisting: overwriteExisting,
+    );
+    // Caller should _wipe / discard this buffer once it's handed to the cipher.
+    return masterKey;
+  }
+
+  /// Validates the phrase and derives the master key WITHOUT saving it.
+  /// Use this to check a phrase against the cloud before committing to it.
+  Future<Uint8List> deriveMasterKey({
+    required String mnemonic,
+    String passphrase = '',
+  }) async {
     final phrase = normalizeMnemonic(mnemonic);
     _validateOrThrow(phrase);
+    return _deriveMasterKey(phrase, unorm.nfkd(passphrase));
+  }
 
+  /// Saves an already-derived master key to this device's secure storage.
+  Future<void> storeMasterKey(
+    Uint8List masterKey, {
+    required bool backupVerified,
+    bool overwriteExisting = false,
+  }) async {
     if (!overwriteExisting && await hasVault()) {
       throw const VaultKeyRecoveryException(
         code: 'vault_already_exists',
         message: 'A vault key already exists on this device.',
       );
     }
-
-    final masterKey = await _deriveMasterKey(phrase, unorm.nfkd(passphrase));
-
     await _secureStorage.write(
       key: masterKeyStorageKey,
       value: base64Url.encode(masterKey),
@@ -170,9 +191,17 @@ class OmenVaultKeyRecoveryService {
       key: backupVerifiedStorageKey,
       value: backupVerified.toString(),
     );
+  }
 
-    // Caller should _wipe / discard this buffer once it's handed to the cipher.
-    return masterKey;
+  /// A public fingerprint of the master key (HMAC, not the key itself).
+  /// Stored in the cloud so a phone can tell whether a typed phrase belongs
+  /// to this account — without the cloud ever learning the key.
+  static Future<String> keyId(Uint8List masterKey) async {
+    final mac = await Hmac.sha256().calculateMac(
+      utf8.encode('omen-vault-key-id-v1'),
+      secretKey: SecretKey(masterKey),
+    );
+    return base64Url.encode(mac.bytes);
   }
 
   /// BIP-39 seed (run in a background isolate so the UI doesn't freeze),

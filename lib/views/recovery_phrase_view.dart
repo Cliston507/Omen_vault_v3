@@ -1,25 +1,52 @@
 import 'package:flutter/material.dart';
 import 'package:omen_vault_v3/services/omen_vault_key_recovery_service.dart';
+import 'package:omen_vault_v3/services/vault_cloud.dart';
+import 'package:omen_vault_v3/services/vault_repository.dart';
+import 'package:omen_vault_v3/views/restore_vault_view.dart';
 
 /// Create-vault flow: show a new 12-word recovery phrase, make the user type
 /// back 3 of the words, and only then save the master key.
 ///
 /// Nothing is stored until the quiz passes, so quitting halfway leaves no
-/// half-made vault behind.
+/// half-made vault behind. If the account already has a phrase (set up on
+/// another phone), the user is sent to Restore instead, so one account can
+/// never end up with two different keys.
 class RecoveryPhraseView extends StatefulWidget {
+  final String userId;
   final OmenVaultKeyRecoveryService? service;
+  final VaultCloud? cloud;
+  final VaultRepository? repository;
 
-  const RecoveryPhraseView({super.key, this.service});
+  const RecoveryPhraseView({
+    super.key,
+    required this.userId,
+    this.service,
+    this.cloud,
+    this.repository,
+  });
 
   @override
   State<RecoveryPhraseView> createState() => _RecoveryPhraseViewState();
 }
 
-enum _Step { loading, alreadySetUp, intro, showWords, verify, saving, done }
+enum _Step {
+  loading,
+  offline,
+  alreadySetUp,
+  mustRestore,
+  intro,
+  showWords,
+  verify,
+  saving,
+  done,
+}
 
 class _RecoveryPhraseViewState extends State<RecoveryPhraseView> {
   late final OmenVaultKeyRecoveryService _service =
       widget.service ?? OmenVaultKeyRecoveryService();
+  late final VaultCloud _cloud = widget.cloud ?? VaultCloud();
+  late final VaultRepository _repository =
+      widget.repository ?? VaultRepository(userId: widget.userId);
 
   _Step _step = _Step.loading;
   String? _mnemonic;
@@ -44,9 +71,29 @@ class _RecoveryPhraseViewState extends State<RecoveryPhraseView> {
   }
 
   Future<void> _checkExisting() async {
-    final exists = await _service.hasVault();
-    if (!mounted) return;
-    setState(() => _step = exists ? _Step.alreadySetUp : _Step.intro);
+    setState(() => _step = _Step.loading);
+    try {
+      if (await _service.hasVault()) {
+        if (mounted) setState(() => _step = _Step.alreadySetUp);
+        return;
+      }
+      final cloudKeyId = await _cloud.getKeyId(widget.userId);
+      if (!mounted) return;
+      setState(() =>
+          _step = cloudKeyId == null ? _Step.intro : _Step.mustRestore);
+    } catch (_) {
+      if (mounted) setState(() => _step = _Step.offline);
+    }
+  }
+
+  Future<void> _openRestore() async {
+    final restored = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => RestoreVaultView(userId: widget.userId),
+      ),
+    );
+    if (restored == true && mounted) Navigator.pop(context, true);
   }
 
   void _generate() {
@@ -91,8 +138,20 @@ class _RecoveryPhraseViewState extends State<RecoveryPhraseView> {
       _step = _Step.saving;
     });
     try {
-      await _service.createMasterKey(mnemonic: mnemonic);
-      await _service.confirmBackup(mnemonic: mnemonic, answers: answers);
+      final key = await _service.deriveMasterKey(mnemonic: mnemonic);
+      // Claim the account's key in the cloud FIRST. If that fails, nothing
+      // is saved and the user can retry. If it succeeds, they hold the
+      // phrase on paper, so they can always restore.
+      final existingId = await _cloud.getKeyId(widget.userId);
+      if (existingId != null) {
+        if (mounted) setState(() => _step = _Step.mustRestore);
+        return;
+      }
+      await _cloud.setKeyId(
+          widget.userId, await OmenVaultKeyRecoveryService.keyId(key));
+      await _service.storeMasterKey(key, backupVerified: true);
+      // Re-upload everything encrypted (replaces any old plain-text copies).
+      await _repository.queueAllForUpload();
       if (!mounted) return;
       setState(() {
         _mnemonic = null;
@@ -107,8 +166,8 @@ class _RecoveryPhraseViewState extends State<RecoveryPhraseView> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = 'Something went wrong saving your key. Nothing was saved. '
-            'Please try again.';
+        _error = 'Couldn\'t save your key. Check your internet connection '
+            'and try again.';
         _step = _Step.verify;
       });
     }
@@ -132,7 +191,24 @@ class _RecoveryPhraseViewState extends State<RecoveryPhraseView> {
                 buttonLabel: 'Done',
                 onPressed: () => Navigator.pop(context),
               ),
+            _Step.offline => _message(
+                icon: Icons.cloud_off,
+                title: 'You\'re offline',
+                body: 'Connect to the internet to set up your recovery phrase.',
+                buttonLabel: 'Try again',
+                onPressed: _checkExisting,
+              ),
+            _Step.mustRestore => _message(
+                icon: Icons.lock_reset,
+                title: 'This account already has a recovery phrase',
+                body: 'It was set up on another phone. Enter those same 12 '
+                    'words to unlock your vault here.',
+                buttonLabel: 'Enter my 12 words',
+                onPressed: _openRestore,
+              ),
             _Step.intro => _message(
+                secondaryLabel: 'I already have a recovery phrase',
+                onSecondary: _openRestore,
                 icon: Icons.key,
                 title: 'Create your recovery phrase',
                 body: 'You\'ll get 12 words. Write them on paper, in order.\n\n'
@@ -147,8 +223,9 @@ class _RecoveryPhraseViewState extends State<RecoveryPhraseView> {
             _Step.done => _message(
                 icon: Icons.check_circle,
                 title: 'Backup confirmed',
-                body: 'Your vault key is saved on this device, and you have '
-                    'your recovery phrase on paper.',
+                body: 'Your vault is now end-to-end encrypted. The cloud only '
+                    'stores scrambled data, and your 12 words are the only '
+                    'way to unlock it on a new phone.',
                 buttonLabel: 'Done',
                 onPressed: () => Navigator.pop(context, true),
               ),
@@ -164,6 +241,8 @@ class _RecoveryPhraseViewState extends State<RecoveryPhraseView> {
     required String body,
     required String buttonLabel,
     required VoidCallback onPressed,
+    String? secondaryLabel,
+    VoidCallback? onSecondary,
   }) {
     final theme = Theme.of(context);
     return Column(
@@ -177,6 +256,10 @@ class _RecoveryPhraseViewState extends State<RecoveryPhraseView> {
         Text(body, style: theme.textTheme.bodyMedium),
         const Spacer(),
         ElevatedButton(onPressed: onPressed, child: Text(buttonLabel)),
+        if (secondaryLabel != null) ...[
+          const SizedBox(height: 8),
+          TextButton(onPressed: onSecondary, child: Text(secondaryLabel)),
+        ],
       ],
     );
   }

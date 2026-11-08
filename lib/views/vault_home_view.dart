@@ -5,14 +5,17 @@ import 'package:provider/provider.dart';
 import 'package:omen_vault_v3/main.dart';
 import 'package:omen_vault_v3/models/vault_entry.dart';
 import 'package:omen_vault_v3/profile_screen.dart';
+import 'package:omen_vault_v3/services/omen_vault_key_recovery_service.dart';
 import 'package:omen_vault_v3/services/vault_repository.dart';
+import 'package:omen_vault_v3/views/recovery_phrase_view.dart';
 import 'package:omen_vault_v3/views/vault_edit_view.dart';
 
 /// The signed-in home of Omen Vault: the user's encrypted entries.
 class VaultHomeView extends StatefulWidget {
   final VaultRepository? repository;
+  final OmenVaultKeyRecoveryService? keyService;
 
-  const VaultHomeView({super.key, this.repository});
+  const VaultHomeView({super.key, this.repository, this.keyService});
 
   @override
   State<VaultHomeView> createState() => _VaultHomeViewState();
@@ -26,10 +29,58 @@ class _VaultHomeViewState extends State<VaultHomeView> {
   bool _loading = true;
   String? _error;
 
+  /// False until the user sets up (or restores) their recovery phrase.
+  /// Cloud backup waits until then.
+  bool _hasRecoveryPhrase = true;
+
   @override
   void initState() {
     super.initState();
     _loadEntries();
+    _checkRecoveryPhrase();
+  }
+
+  Future<void> _checkRecoveryPhrase() async {
+    if (kIsWeb) return;
+    try {
+      final has = await (widget.keyService ?? OmenVaultKeyRecoveryService())
+          .hasVault();
+      if (mounted) setState(() => _hasRecoveryPhrase = has);
+    } catch (_) {
+      // Secure storage unavailable (e.g. tests): don't nag.
+    }
+  }
+
+  Future<void> _openRecoverySetup() async {
+    await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            RecoveryPhraseView(userId: repository.userId),
+      ),
+    );
+    await _checkRecoveryPhrase();
+    await _loadEntries();
+  }
+
+  Widget _backupBanner(BuildContext context) {
+    final theme = Theme.of(context);
+    return Material(
+      color: theme.colorScheme.tertiaryContainer,
+      child: ListTile(
+        leading: Icon(Icons.cloud_off,
+            color: theme.colorScheme.onTertiaryContainer),
+        title: Text('Cloud backup is paused',
+            style: TextStyle(color: theme.colorScheme.onTertiaryContainer)),
+        subtitle: Text(
+            'Set up your recovery phrase to encrypt and back up your vault.',
+            style: TextStyle(color: theme.colorScheme.onTertiaryContainer)),
+        trailing: TextButton(
+          onPressed: _openRecoverySetup,
+          child: const Text('Set up'),
+        ),
+      ),
+    );
   }
 
   Future<void> _loadEntries() async {
@@ -140,7 +191,17 @@ class _VaultHomeViewState extends State<VaultHomeView> {
         tooltip: 'New entry',
         child: const Icon(Icons.add),
       ),
-      body: _loading
+      body: Column(
+        children: [
+          if (!_hasRecoveryPhrase) _backupBanner(context),
+          Expanded(child: _buildBody()),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBody() {
+    return _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
               ? Center(
@@ -179,7 +240,6 @@ class _VaultHomeViewState extends State<VaultHomeView> {
                           onTap: () => _openEditor(entry: entry),
                         );
                       },
-                    ),
-    );
+                    );
   }
 }

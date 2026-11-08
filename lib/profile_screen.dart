@@ -25,14 +25,15 @@ class ProfileScreen extends StatelessWidget {
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 32),
-            if (!kIsWeb) ...[
+            if (!kIsWeb && user != null) ...[
               OutlinedButton.icon(
                 icon: const Icon(Icons.key),
                 label: const Text('Recovery phrase'),
                 onPressed: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) => const RecoveryPhraseView()),
+                      builder: (context) =>
+                          RecoveryPhraseView(userId: user.uid)),
                 ),
               ),
               const SizedBox(height: 16),
