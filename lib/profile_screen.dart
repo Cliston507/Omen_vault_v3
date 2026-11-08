@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:omen_vault_v3/services/auth_service.dart';
+import 'package:omen_vault_v3/views/recovery_phrase_view.dart';
 import 'package:provider/provider.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -23,6 +25,18 @@ class ProfileScreen extends StatelessWidget {
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 32),
+            if (!kIsWeb) ...[
+              OutlinedButton.icon(
+                icon: const Icon(Icons.key),
+                label: const Text('Recovery phrase'),
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const RecoveryPhraseView()),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
             ElevatedButton(
               onPressed: () {
                 Provider.of<AuthService>(context, listen: false).signOut();

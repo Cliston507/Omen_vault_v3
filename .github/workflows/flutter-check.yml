@@ -22,3 +22,6 @@ jobs:
 
       - name: Analyze (fails only on real errors)
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: Test key recovery service
+        run: flutter test test/unit/omen_vault_key_recovery_service_test.dart
